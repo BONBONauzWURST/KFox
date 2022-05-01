@@ -12,6 +12,7 @@ import dev.kord.core.entity.User
 import dev.kord.core.entity.application.ApplicationCommand
 import dev.kord.core.entity.application.GuildApplicationCommand
 import dev.kord.core.entity.interaction.GroupCommand
+import dev.kord.core.entity.interaction.OptionValue
 import dev.kord.core.entity.interaction.ResolvableOptionValue
 import dev.kord.core.event.Event
 import dev.kord.core.event.interaction.*
@@ -67,22 +68,20 @@ suspend fun listen(
     registry: ComponentRegistry = MemoryComponentRegistry(),
     reflections: Reflections = reflections(`package`),
     commandz: Map<Long, List<CommandData>>
-): Job = coroutineScope {
+): Job = coroutineScope{
     launch {
         for (entry in commandz) {
             val localCommands = entry.value
 
-            val applicationCommands: Kord.() -> Flow<ApplicationCommand> = {
-                runBlocking {
-                    if (entry.key != 0L)
-                        createGuildApplicationCommands(Snowflake(entry.key)) {
-                            registerCommands(entry.value)
-                        }
-                    else
-                        createGlobalApplicationCommands {
-                            registerCommands(entry.value)
-                        }
-                }
+            val applicationCommands: suspend Kord.() -> Flow<ApplicationCommand> = {
+                if (entry.key != 0L)
+                    createGuildApplicationCommands(Snowflake(entry.key)) {
+                        registerCommands(entry.value)
+                    }
+                else
+                    createGlobalApplicationCommands {
+                        registerCommands(entry.value)
+                    }
             }
 
             val logger = KotlinLogging.logger {}
@@ -97,7 +96,6 @@ suspend fun listen(
                             function
                         )
                     } +
-
                         reflections.getMethodsAnnotatedWith(SelectMenu::class.java).map { it.kotlinFunction!! }
                             .associate { function ->
                                 val annotation = function.findAnnotation<SelectMenu>()!!
@@ -107,7 +105,6 @@ suspend fun listen(
                                     function
                                 )
                             } +
-
                         reflections.getMethodsAnnotatedWith(Modal::class.java).map { it.kotlinFunction!! }
                             .associate { function ->
                                 val annotation = function.findAnnotation<Modal>()!!
@@ -210,8 +207,7 @@ suspend fun listen(
                                             }
                                         }
 
-                                        val suppliedParameters =
-                                            interaction.command.options.mapValues { it.value.value }
+                                        val suppliedParameters = interaction.command.options.mapValues { it.value }
 
                                         localCommand.function.callSuspendByParameters(
                                             kord,
@@ -224,7 +220,7 @@ suspend fun listen(
                                     else -> TODO()
                                 }
                             }
-                        }.onFailure { kordLogger.catching(it) }
+                        }.onFailure { println(it) }
                     }
                 }
                 .launchIn(scope)
@@ -233,7 +229,7 @@ suspend fun listen(
 }
 
 /**
- * Experimental guild commandRegister
+ * Experimental commandRegister
  * @param package path to package with your slash commands
  * @param kord
  */
@@ -261,11 +257,17 @@ internal suspend fun KFunction<*>.callSuspendByParameters(
                 it.key == (commandParameters[parameter.name]?.name ?: parameter.name)
             }
 
-        if (supplied != null)
-            return@associateWith if (supplied.value is ResolvableOptionValue<*>)
-                (supplied.value as ResolvableOptionValue<*>).resolvedObject
-            else
-                supplied.value
+        if (supplied != null) {
+            val value = supplied.value
+            if (value == null && !parameter.type.isMarkedNullable) throw IllegalStateException("Non-nullable parameter \"${supplied.key}\" is null, did you accidentally set not required when creating the command?")
+            if (value !is OptionValue<*> || parameter.type.classifier == OptionValue::class.java) return@associateWith value
+
+            return@associateWith if (value is ResolvableOptionValue<*>) {
+                value.resolvedObject
+            } else {
+                value.value
+            }
+        }
 
         when (parameter.type.classifier) {
             CmdContextChat::class ->
@@ -406,7 +408,6 @@ fun MultiApplicationCommandBuilder.registerCommands(localCommands: List<CommandD
                         addParameters(child)
                     }
             }
-
             addParameters(command)
         }
     }
@@ -416,8 +417,7 @@ private fun BaseInputChatBuilder.addParameters(command: CommandData) {
     for (parameter in command.parameters) {
         val name = parameter.value.name
         val description = parameter.value.description
-        if (name == null || description == null)
-            continue
+        if (name == null || description == null) continue
 
         val nullable = parameter.value.parameter.type.isMarkedNullable
         when (parameter.value.parameter.type.classifier) {
@@ -425,10 +425,7 @@ private fun BaseInputChatBuilder.addParameters(command: CommandData) {
             User::class -> user(name, description) { required = !nullable }
             Boolean::class -> boolean(name, description) { required = !nullable }
             Role::class -> role(name, description) { required = !nullable }
-            dev.kord.core.entity.channel.Channel::class -> channel(
-                name,
-                description
-            ) { required = !nullable }
+            dev.kord.core.entity.channel.Channel::class -> channel(name, description) { required = !nullable }
             Attachment::class -> attachment(name, description) { required = !nullable }
             else -> throw UnsupportedOperationException("Parameter of type ${parameter.value.parameter.type} is not supported.")
         }

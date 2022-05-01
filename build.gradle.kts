@@ -2,12 +2,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.6.20"
-    kotlin("plugin.serialization") version "1.6.10"
+    kotlin("plugin.serialization") version "1.6.20"
     id("maven-publish")
 }
 
 group = "dev.bitflow"
-version = "1.12"
+version = "1.17"
 
 repositories {
     mavenCentral()

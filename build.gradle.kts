@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "dev.bitflow"
-version = "1.18"
+version = "1.18.3"
 
 repositories {
     mavenCentral()

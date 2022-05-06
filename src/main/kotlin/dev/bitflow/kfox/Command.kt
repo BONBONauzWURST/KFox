@@ -2,6 +2,7 @@ package dev.bitflow.kfox
 
 import dev.bitflow.kfox.contexts.*
 import dev.kord.common.annotation.KordUnsafe
+import dev.kord.common.entity.ApplicationCommandOptionType
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.ClientResources
 import dev.kord.core.Kord
@@ -420,10 +421,13 @@ private fun BaseInputChatBuilder.addParameters(command: CommandData) {
 
         val nullable = parameter.value.parameter.type.isMarkedNullable
         when (parameter.value.parameter.type.classifier) {
+            Number::class -> number(name, description) { required = !nullable }
+            Int::class -> int(name, description) { required = !nullable }
             String::class -> string(name, description) { required = !nullable }
             User::class -> user(name, description) { required = !nullable }
             Boolean::class -> boolean(name, description) { required = !nullable }
             Role::class -> role(name, description) { required = !nullable }
+            ApplicationCommandOptionType.Mentionable::class -> mentionable(name, description) { required = !nullable }
             dev.kord.core.entity.channel.Channel::class -> channel(name, description) { required = !nullable }
             Attachment::class -> attachment(name, description) { required = !nullable }
             else -> throw UnsupportedOperationException("Parameter of type ${parameter.value.parameter.type} is not supported.")

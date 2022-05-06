@@ -220,7 +220,7 @@ suspend fun listen(
                                     else -> TODO()
                                 }
                             }
-                        }.onFailure { println(it) }
+                        }.onFailure { kordLogger.catching(it) }
                     }
                 }
                 .launchIn(scope)
@@ -267,6 +267,8 @@ internal suspend fun KFunction<*>.callSuspendByParameters(
             } else {
                 value.value
             }
+        } else if (parameter.type.isMarkedNullable) {
+            return@associateWith null
         }
 
         when (parameter.type.classifier) {
@@ -350,10 +352,7 @@ internal suspend fun KFunction<*>.callSuspendByParameters(
                     event,
                     registry
                 )
-            else -> if (parameter.isOptional)
-                null
-            else
-                throw IllegalArgumentException("Parameter \"${parameter.name}\" is either of unsupported type or null when it was not optional.")
+            else -> throw IllegalArgumentException("Failed to wire parameter \"${parameter.name}\".")
         }
     }
     callSuspendBy(

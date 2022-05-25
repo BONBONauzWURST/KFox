@@ -392,7 +392,7 @@ fun scanForCommands(reflections: Reflections): Map<Long, List<CommandData>> {
                     )
                 }.associateBy { it.parameter.name!! },
                 if (group == null) null else GroupData(group.name, group.description),
-                if (subCommand?.parent?.isEmpty() == true) null else subCommand?.parent,
+                if (subCommand?.parent?.isEmpty() == true) null else subCommand?.parent
             )
 
             if (!localGuildCommands.containsKey(annotation.guildId))

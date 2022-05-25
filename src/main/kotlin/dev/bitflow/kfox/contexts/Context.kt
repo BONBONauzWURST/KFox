@@ -22,7 +22,7 @@ suspend inline fun ModalBuilder.register(registry: ComponentRegistry, callbackId
 }
 
 sealed class Context(
-    val client: Kord,
+    open val client: Kord,
     private val registry: ComponentRegistry
 ) {
     @Suppress("unused")

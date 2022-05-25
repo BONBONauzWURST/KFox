@@ -1,13 +1,13 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.6.20"
-    kotlin("plugin.serialization") version "1.6.20"
+    kotlin("jvm") version "1.6.21"
+    kotlin("plugin.serialization") version "1.6.21"
     id("maven-publish")
 }
 
 group = "dev.bitflow"
-version = "1.18.3"
+version = "1.19.1"
 
 repositories {
     mavenCentral()
@@ -17,7 +17,7 @@ dependencies {
     implementation(kotlin("stdlib"))
     api("org.reflections:reflections:0.10.2")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
@@ -28,7 +28,7 @@ dependencies {
     runtimeOnly("ch.qos.logback:logback-classic:1.2.11")
     runtimeOnly("ch.qos.logback:logback-core:1.2.11")
 
-    api("dev.kord:kord-core:0.8.0-M13")
+    api("dev.kord:kord-core:0.8.0-M14")
 
     testImplementation(kotlin("test"))
     testImplementation(platform("org.junit:junit-bom:5.8.2"))
@@ -58,7 +58,6 @@ publishing {
     publications {
         create<MavenPublication>("maven") {
             from(components.getByName("java"))
-
             artifact(sourceJar)
         }
     }

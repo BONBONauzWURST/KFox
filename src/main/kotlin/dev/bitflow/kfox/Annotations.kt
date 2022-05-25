@@ -4,7 +4,7 @@ package dev.bitflow.kfox
 annotation class Command(
     val name: String,
     val description: String, // TODO: Localize these two
-    val guildId: Long = 0L
+    val guildId: Long = 0L,
 )
 
 @Target(AnnotationTarget.FUNCTION)
@@ -21,6 +21,11 @@ annotation class Group(
 annotation class Parameter(
     val name: String, // TODO: Localize these two
     val description: String
+)
+
+@Target(AnnotationTarget.VALUE_PARAMETER)
+annotation class Choices(
+    val list: Array<String>
 )
 
 @Target(AnnotationTarget.FUNCTION)

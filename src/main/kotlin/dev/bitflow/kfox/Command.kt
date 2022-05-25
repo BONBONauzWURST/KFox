@@ -1,9 +1,12 @@
 package dev.bitflow.kfox
 
 import dev.bitflow.kfox.contexts.*
+import dev.kord.common.Locale
 import dev.kord.common.annotation.KordUnsafe
 import dev.kord.common.entity.ApplicationCommandOptionType
+import dev.kord.common.entity.Choice
 import dev.kord.common.entity.Snowflake
+import dev.kord.common.entity.optional.Optional
 import dev.kord.core.ClientResources
 import dev.kord.core.Kord
 import dev.kord.core.cache.data.ApplicationCommandData
@@ -260,8 +263,10 @@ internal suspend fun KFunction<*>.callSuspendByParameters(
 
         if (supplied != null) {
             val value = supplied.value
-            if (value == null && !parameter.type.isMarkedNullable) throw IllegalStateException("Non-nullable parameter \"${supplied.key}\" is null, did you accidentally set not required when creating the command?")
-            if (value !is OptionValue<*> || parameter.type.classifier == OptionValue::class.java) return@associateWith value
+            if (value == null && !parameter.type.isMarkedNullable)
+                throw IllegalStateException("Non-nullable parameter \"${supplied.key}\" is null, did you accidentally set not required when creating the command?")
+            if (value !is OptionValue<*> || parameter.type.classifier == OptionValue::class.java)
+                return@associateWith value
 
             return@associateWith if (value is ResolvableOptionValue<*>) {
                 value.resolvedObject
@@ -378,10 +383,16 @@ fun scanForCommands(reflections: Reflections): Map<Long, List<CommandData>> {
                 function,
                 function.parameters.map {
                     val p = it.findAnnotation<Parameter>()
-                    ParameterData(p?.name, p?.description, it)
+                    val choices = it.findAnnotation<Choices>()
+                    ParameterData(
+                        p?.name,
+                        p?.description,
+                        it,
+                        choices?.list?.map { choice -> Choice.StringChoice(choice, Optional(null), choice)}?.toMutableList()
+                    )
                 }.associateBy { it.parameter.name!! },
                 if (group == null) null else GroupData(group.name, group.description),
-                if (subCommand?.parent?.isEmpty() == true) null else subCommand?.parent
+                if (subCommand?.parent?.isEmpty() == true) null else subCommand?.parent,
             )
 
             if (!localGuildCommands.containsKey(annotation.guildId))
@@ -423,7 +434,10 @@ private fun BaseInputChatBuilder.addParameters(command: CommandData) {
         when (parameter.value.parameter.type.classifier) {
             Number::class -> number(name, description) { required = !nullable }
             Int::class -> int(name, description) { required = !nullable }
-            String::class -> string(name, description) { required = !nullable }
+            String::class -> string(name, description) {
+                required = !nullable
+                choices = parameter.value.choices
+            }
             User::class -> user(name, description) { required = !nullable }
             Boolean::class -> boolean(name, description) { required = !nullable }
             Role::class -> role(name, description) { required = !nullable }

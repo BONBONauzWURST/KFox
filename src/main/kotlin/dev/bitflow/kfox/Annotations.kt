@@ -4,7 +4,7 @@ package dev.bitflow.kfox
 annotation class Command(
     val name: String,
     val description: String, // TODO: Localize these two
-    val guildId: Long = 0L,
+    val guildId: Long = 0L
 )
 
 @Target(AnnotationTarget.FUNCTION)
